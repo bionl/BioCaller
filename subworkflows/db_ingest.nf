@@ -29,8 +29,7 @@ workflow DB_INGEST {
 
     main:
         // ── Parse manifest and filter READY samples ───────────────────────
-        ch_pass = Channel
-            .fromPath(manifest_file)
+        ch_pass = manifest_file
             .splitCsv(header: true, sep: '\t')
             .filter { row ->
                 def rec = (row.qc_recommendation ?: '').trim()
