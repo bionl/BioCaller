@@ -16,7 +16,7 @@
 // ───────────────────────────────────────────────────────────────────────────
 nextflow.enable.dsl = 2
 
-include { VEP_ANNOTATE        } from '../external/db_export/modules/vep_annotate'
+include { VEP_Annotate_DB } from '../external/db_export/modules/vep_annotate'
 include { EXTRACT_VARIANTS    } from '../external/db_export/modules/extract_variants'
 include { MOSDEPTH_THRESHOLDS } from '../external/db_export/modules/mosdepth_thresholds'
 include { CONVERT_THRESHOLDS  } from '../external/db_export/modules/thresholds_to_coverage'
@@ -66,7 +66,7 @@ workflow DB_INGEST {
         // ── Step 1: VEP annotation ────────────────────────────────────────
         ch_vcf_only = ch_pass.map { meta, vcf, bam, bai -> [ meta, vcf ] }
 
-        VEP_ANNOTATE(
+        VEP_Annotate_DB(
             ch_vcf_only,
             ch_vep_cache,
             ch_vep_fasta,
@@ -80,7 +80,7 @@ workflow DB_INGEST {
         ch_variants_script = Channel.value(
             file("${workflow.projectDir}/external/db_export/bins/db_vep_vcf_to_variants_all.py")
         )
-        EXTRACT_VARIANTS(VEP_ANNOTATE.out.vep_vcf, ch_variants_script)
+        EXTRACT_VARIANTS(VEP_ANNOTATE_DB.out.vep_vcf, ch_variants_script)
 
         // ── Step 3: BAM coverage ──────────────────────────────────────────
         ch_bam_input = ch_pass.map { meta, vcf, bam, bai -> [ meta, bam, bai ] }
