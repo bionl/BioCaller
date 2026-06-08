@@ -2,11 +2,12 @@
 // ───────────────────────────────────────────────────────────────────────────
 // DB_INGEST — reads the run-output manifest produced by MANIFEST, filters
 // samples whose qc_recommendation == "READY", then runs the db_export
-// pipeline (variant extraction → mosdepth coverage → coverage load →
-// variant load) for each passing sample.
+// pipeline for each passing sample:
+//   variant extraction (no VEP) → mosdepth coverage → coverage load → variant load
 //
-// Note: VEP annotation is intentionally skipped here — the consensus VCF
-// from the variant calling stage is used directly.
+// The consensus VCF is used directly without re-annotation. Annotation
+// columns in the variants TSV (gene, hgvsc, impact, clinvar) are left
+// empty and populated downstream by the database annotation layer.
 //
 // Inputs:
 //   manifest_file   — path to run_output_manifest.tsv
@@ -58,9 +59,10 @@ workflow DB_INGEST {
         ch_bins_bed = Channel.value(file(params.bins_bed, checkIfExists: true))
 
         // ── Step 1: Extract variants directly from the consensus VCF ──────
+        // Uses a local script that does not require VEP/CSQ annotation.
         ch_vcf_input       = ch_pass.map { meta, vcf, bam, bai -> [ meta, vcf ] }
         ch_variants_script = Channel.value(
-            file("${workflow.projectDir}/external/db_export/bins/db_vep_vcf_to_variants_all.py")
+            file("${workflow.projectDir}/scripts/db_vcf_to_variants.py")
         )
         EXTRACT_VARIANTS(ch_vcf_input, ch_variants_script)
 
